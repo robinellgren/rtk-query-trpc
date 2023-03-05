@@ -1,12 +1,6 @@
 import type { AppRouter } from "../../../../server/server";
-import type { inferProcedureOutput, inferProcedureInput } from "@trpc/server";
 import { createApi, BaseQueryApi } from "@reduxjs/toolkit/query/react";
 import { createTRPCProxyClient, httpLink } from "@trpc/client";
-
-type GetFunNameResult = inferProcedureOutput<AppRouter["getFunName"]>;
-type GetFunNameInput = inferProcedureInput<AppRouter["getFunName"]>;
-type GetSuperFunNameResult = inferProcedureOutput<AppRouter["getSuperFunName"]>;
-type GetSuperFunNameInput = inferProcedureInput<AppRouter["getSuperFunName"]>;
 
 type RootState = {
   apiUrls: {
@@ -27,28 +21,35 @@ const getTRPCClient = (queryApi: BaseQueryApi) => {
     ],
   });
 };
+type Router = ReturnType<typeof getTRPCClient>;
+
+const baseQueryFn = (trpcResult: Promise<unknown>) =>
+  trpcResult.then((data) => ({ data })).catch((error) => ({ error }));
 
 export const nameApi = createApi({
   reducerPath: "nameApi",
-  baseQuery: (trpcResult: Promise<unknown>) =>
-    trpcResult.then((data) => ({ data })).catch((error) => ({ error })),
+  baseQuery: baseQueryFn,
   endpoints: (builder) => ({
-    getFunName: builder.query<GetFunNameResult, GetFunNameInput>({
-      queryFn: async (arg, queryApi, extraOptions, baseQuery) => {
+    getFunName: builder.query<
+      Awaited<ReturnType<Router["getFunName"]["mutate"]>>,
+      Parameters<Router["getFunName"]["mutate"]>[0]
+    >({
+      queryFn: async (arg, queryApi) => {
         const client = getTRPCClient(queryApi);
         const result = await client.getFunName.mutate(arg);
         return { data: result };
       },
     }),
-    getSuperFunName: builder.query<GetSuperFunNameResult, GetSuperFunNameInput>(
-      {
-        queryFn: async (arg, queryApi, extraOptions, baseQuery) => {
-          const client = getTRPCClient(queryApi);
-          const result = await client.getSuperFunName.mutate(arg);
-          return { data: result };
-        },
-      }
-    ),
+    getSuperFunName: builder.query<
+      Awaited<ReturnType<Router["getSuperFunName"]["mutate"]>>,
+      Parameters<Router["getSuperFunName"]["mutate"]>[0]
+    >({
+      queryFn: async (arg, queryApi) => {
+        const client = getTRPCClient(queryApi);
+        const result = await client.getSuperFunName.mutate(arg);
+        return { data: result };
+      },
+    }),
   }),
 });
 
