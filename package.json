@@ -1,0 +1,22 @@
+{
+  "name": "react-toolkit-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "frontend": "^2.0.0-alpha.4",
+    "server": "^1.0.38"
+  },
+  "volta": {
+    "node": "16.18.1",
+    "npm": "8.19.3"
+  }
+}
