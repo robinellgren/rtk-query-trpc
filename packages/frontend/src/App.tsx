@@ -4,14 +4,6 @@ import { useGetFunNameQuery, useGetSuperFunNameQuery } from './app/services/name
 import './App.css';
 import styles from './Pokemon.module.css';
 
-const getNameFromInput = (input:string|undefined) => {
-  if(input === undefined) {
-    console.warn("INPUT IS UNDEFINED", input);
-    return "";
-  }
-  return input;
-}
-
 function App() {
   const [pokemonName, setPokemonName] = useState('bulbasaur');
   const { data: pokemonData, error: pokemonError, isLoading: pokemonLoading } = useGetPokemonByNameQuery(pokemonName);
@@ -30,7 +22,7 @@ function App() {
             className={styles.textbox}
             aria-label="Which pokemon do you want to know about?"
             value={pokemonName}
-            onChange={(e) => setPokemonName(getNameFromInput(e.target.value))}
+            onChange={(e) => setPokemonName(e.target.value)}
           />
         </div>
         <h2>Pokemon image (PokeAPI)</h2>
