@@ -1,6 +1,13 @@
-import { initTRPC } from "@trpc/server";
+import { inferAsyncReturnType, initTRPC } from "@trpc/server";
+import * as trpcExpress from "@trpc/server/adapters/express";
+import * as express from "express";
 
-const t = initTRPC.create();
+const createContext = ({
+  req,
+  res,
+}: trpcExpress.CreateExpressContextOptions) => ({}); // no context
+type Context = inferAsyncReturnType<typeof createContext>;
+const t = initTRPC.context<Context>().create();
 
 interface User {
   id: string;
@@ -15,7 +22,7 @@ const userList: User[] = [
 ];
 
 const appRouter = t.router({
-  greet: t.procedure
+  getUser: t.procedure
     // The input is unknown at this time.
     // A client could have sent us anything
     // so we won't assume a certain data type.
@@ -38,3 +45,14 @@ const appRouter = t.router({
 });
 
 export type AppRouter = typeof appRouter;
+
+const app = express();
+app.use(
+  "/trpc",
+  trpcExpress.createExpressMiddleware({
+    router: appRouter,
+    createContext,
+  })
+);
+console.log("Server listening on port 4000! :rocket:");
+app.listen(4000);

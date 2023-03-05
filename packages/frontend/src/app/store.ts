@@ -1,10 +1,17 @@
-import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import counterReducer from '../features/counter/counterSlice';
+import { configureStore as rtkConfigureStore } from "@reduxjs/toolkit";
+import { ThunkAction, Action } from "@reduxjs/toolkit";
+import counterReducer from "../features/counter/counterSlice";
+import { pokemonApi } from "./services/pokemon";
 
-export const store = configureStore({
+export const store = rtkConfigureStore({
   reducer: {
+    [pokemonApi.reducerPath]: pokemonApi.reducer,
     counter: counterReducer,
   },
+  // Adding the api middleware enables caching, invalidation, polling,
+  // and other useful features of `rtk-query`.
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(pokemonApi.middleware),
 });
 
 export type AppDispatch = typeof store.dispatch;
