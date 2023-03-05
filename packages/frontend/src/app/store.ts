@@ -1,24 +1,24 @@
 import { configureStore as rtkConfigureStore } from "@reduxjs/toolkit";
 import { ThunkAction, Action } from "@reduxjs/toolkit";
-import counterReducer from "../features/counter/counterSlice";
+import { combineReducers } from "redux";
 import { pokemonApi } from "./services/pokemon";
 import { nameApi } from "./services/names";
-import apiUrlReducer from "./services/apiUrlReducer";
+import { apiUrlReducer, ApiUrlsState } from "./services/apiUrlReducer";
+import { persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 
-const preloadedState = {
-  apiUrls: {
-    TRPC_API_URL: "http://localhost:4000/trpc",
-  },
+const apiUrlsConfig = {
+  key: "apiUrls",
+  storage,
 };
+const rootReducer = combineReducers({
+  apiUrls: persistReducer<ApiUrlsState>(apiUrlsConfig, apiUrlReducer),
+  [pokemonApi.reducerPath]: pokemonApi.reducer,
+  [nameApi.reducerPath]: nameApi.reducer,
+});
 
 export const store = rtkConfigureStore({
-  reducer: {
-    apiUrls: apiUrlReducer,
-    [pokemonApi.reducerPath]: pokemonApi.reducer,
-    [nameApi.reducerPath]: nameApi.reducer,
-    counter: counterReducer,
-  },
-  preloadedState,
+  reducer: rootReducer,
   // Adding the api middleware enables caching, invalidation, polling,
   // and other useful features of `rtk-query`.
   middleware: (getDefaultMiddleware) =>

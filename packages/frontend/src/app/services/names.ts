@@ -1,19 +1,32 @@
 import type { AppRouter } from "../../../../server/server";
 import type { inferProcedureOutput, inferProcedureInput } from "@trpc/server";
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { createApi, BaseQueryApi } from "@reduxjs/toolkit/query/react";
 import { createTRPCProxyClient, httpLink } from "@trpc/client";
 
 type GetFunNameResult = inferProcedureOutput<AppRouter["getFunName"]>;
 type GetFunNameInput = inferProcedureInput<AppRouter["getFunName"]>;
 type GetSuperFunNameResult = inferProcedureOutput<AppRouter["getSuperFunName"]>;
 type GetSuperFunNameInput = inferProcedureInput<AppRouter["getSuperFunName"]>;
-const trpcClient = createTRPCProxyClient<AppRouter>({
-  links: [
-    httpLink({
-      url: "http://localhost:4000/trpc",
-    }),
-  ],
-});
+
+type RootState = {
+  apiUrls: {
+    apiUrls: {
+      TRPC_API_URL: string;
+    };
+  };
+};
+
+const getTRPCClient = (queryApi: BaseQueryApi) => {
+  const state = queryApi.getState() as RootState;
+  const trpcBaseUrl = state.apiUrls.apiUrls.TRPC_API_URL;
+  return createTRPCProxyClient<AppRouter>({
+    links: [
+      httpLink({
+        url: trpcBaseUrl,
+      }),
+    ],
+  });
+};
 
 export const nameApi = createApi({
   reducerPath: "nameApi",
@@ -21,11 +34,19 @@ export const nameApi = createApi({
     trpcResult.then((data) => ({ data })).catch((error) => ({ error })),
   endpoints: (builder) => ({
     getFunName: builder.query<GetFunNameResult, GetFunNameInput>({
-      query: trpcClient.getFunName.mutate,
+      queryFn: async (arg, queryApi, extraOptions, baseQuery) => {
+        const client = getTRPCClient(queryApi);
+        const result = await client.getFunName.mutate(arg);
+        return { data: result };
+      },
     }),
     getSuperFunName: builder.query<GetSuperFunNameResult, GetSuperFunNameInput>(
       {
-        query: trpcClient.getSuperFunName.mutate,
+        queryFn: async (arg, queryApi, extraOptions, baseQuery) => {
+          const client = getTRPCClient(queryApi);
+          const result = await client.getSuperFunName.mutate(arg);
+          return { data: result };
+        },
       }
     ),
   }),
