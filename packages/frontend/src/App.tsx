@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGetPokemonByNameQuery } from './app/services/pokemon';
+import { useGetFunNameQuery, useGetSuperFunNameQuery } from './app/services/names';
 import './App.css';
 import styles from './Pokemon.module.css';
 
@@ -13,7 +14,10 @@ const getNameFromInput = (input:string|undefined) => {
 
 function App() {
   const [pokemonName, setPokemonName] = useState('bulbasaur');
-  const { data, error, isLoading } = useGetPokemonByNameQuery(pokemonName);
+  const { data: pokemonData, error: pokemonError, isLoading: pokemonLoading } = useGetPokemonByNameQuery(pokemonName);
+  const { data: funNameData, error: funNameError, isLoading: funNameLoading } = useGetFunNameQuery({name: pokemonName});
+  const { data: superFunNameData, error: superFunNameError, isLoading: superFunNameLoading } = useGetSuperFunNameQuery({name: pokemonName});
+
   let emptyInput = pokemonName === "";
   return (
     <div className="App">
@@ -29,18 +33,45 @@ function App() {
             onChange={(e) => setPokemonName(getNameFromInput(e.target.value))}
           />
         </div>
+        <h2>Pokemon image (PokeAPI)</h2>
         <div>
-          {isLoading || emptyInput ? (
+          {pokemonLoading || emptyInput ? (
             <div></div>
           ) : (
             <div>
-              {data?.sprites ? (
-                <img src={data?.sprites.front_shiny} className="pokemon-img" alt="poke" width="400" height="500" />
+              {pokemonData?.sprites ? (
+                <img src={pokemonData?.sprites.front_shiny} className="pokemon-img" alt="poke" width="400" height="500" />
               ) : (
                 <b>Error: No such pokemon: {pokemonName}</b>
               )}
             </div>
           )}
+        </div>
+        <div>
+          <h2>Fun name (tRPC Response)</h2>
+
+          {funNameError || funNameLoading ? (
+            <div>Loading or error (Fun name)</div>
+          ) : 
+            <div>
+              <span> Original name: {funNameData?.originalName} </span> <br/> 
+              <span> Fun name: {funNameData?.funName} </span>
+            </div>
+          
+          }
+        </div>
+        <div>
+          <h2>SUPER Fun name (tRPC Response)</h2>
+
+          {superFunNameError || superFunNameLoading ? (
+            <div>Loading or error (Superfun name)</div>
+          ) : 
+            <div>
+              <span> Original name: {superFunNameData?.originalName} </span> <br/> 
+              <span> Super Fun name: {superFunNameData?.superFunName} </span>
+            </div>
+          
+          }
         </div>
       </header>
     </div>

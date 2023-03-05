@@ -1,6 +1,9 @@
 import { inferAsyncReturnType, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import * as express from "express";
+import express from "express";
+import cors from "cors";
+import { z } from "zod";
+import { funNameGenerator } from "./utils";
 
 const createContext = ({
   req,
@@ -9,45 +12,47 @@ const createContext = ({
 type Context = inferAsyncReturnType<typeof createContext>;
 const t = initTRPC.context<Context>().create();
 
-interface User {
-  id: string;
-  name: string;
-}
+type FunName = {
+  originalName: string;
+  funName: string;
+};
 
-const userList: User[] = [
-  {
-    id: "1",
-    name: "KATT",
-  },
-];
+type SuperFunName = {
+  originalName: string;
+  superFunName: string;
+};
 
 const appRouter = t.router({
-  getUser: t.procedure
-    // The input is unknown at this time.
-    // A client could have sent us anything
-    // so we won't assume a certain data type.
-    .input((val: unknown) => {
-      // If the value is of type string, return it.
-      // TypeScript now knows that this value is a string.
-      if (typeof val === "string") return val;
-
-      // Uh oh, looks like that input wasn't a string.
-      // We will throw an error instead of running the procedure.
-      throw new Error(`Invalid input: ${typeof val}`);
-    })
-    .query((req) => {
-      const { input } = req;
-
-      const user = userList.find((u) => u.id === input);
-
-      return user;
+  getFunName: t.procedure
+    .input(z.object({ name: z.string() }))
+    .mutation((req) => {
+      const funName = funNameGenerator(req.input.name);
+      const result: FunName = {
+        originalName: req.input.name,
+        funName,
+      };
+      return result;
+    }),
+  getSuperFunName: t.procedure
+    .input(z.object({ name: z.string() }))
+    .mutation((req) => {
+      const funName = funNameGenerator(req.input.name);
+      const superFunName = funNameGenerator(funName);
+      const result: SuperFunName = {
+        originalName: req.input.name,
+        superFunName: superFunName,
+      };
+      return result;
     }),
 });
 
 export type AppRouter = typeof appRouter;
-
+const corsOptions = {
+  origin: "http://localhost:3001",
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
 const app = express();
-app.use(
+app.use(cors(corsOptions)).use(
   "/trpc",
   trpcExpress.createExpressMiddleware({
     router: appRouter,
